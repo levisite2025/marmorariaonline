@@ -30,9 +30,13 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
 
   const handleShareWhatsapp = () => {
     const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-BR');
+    const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     
     const message = [
       `📋 *ORÇAMENTO - MARMORE ONLINE*`,
+      `📅 Emitido em: ${dateStr} às ${timeStr}`,
       ``,
       `👤 *Cliente:* ${customer.name || 'Não informado'}`,
       `📞 *Contato:* ${customer.phone || '-'}`,
@@ -118,8 +122,13 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
             <p className="text-sm text-slate-500 mt-1">Orçamento & Plano de Corte</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-slate-900">Data: {new Date().toLocaleDateString()}</p>
-            <p className="text-xs text-slate-500">ID: {Date.now().toString().slice(-6)}</p>
+            <p className="text-sm font-bold text-slate-900 uppercase">
+              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+            <p className="text-lg font-mono text-slate-700 font-bold">
+              {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">ID: {Date.now().toString().slice(-6)}</p>
           </div>
         </header>
 
