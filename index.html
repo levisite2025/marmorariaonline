@@ -2,11 +2,23 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Marmore Online - Mármores e Granitos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+      html, body { 
+        height: 100%; 
+        width: 100%; 
+        margin: 0; 
+        padding: 0; 
+        overflow: hidden; /* Importante para evitar scroll da página ao manipular 3D */
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
       body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
       /* Custom scrollbar for webkit - Light Theme */
       ::-webkit-scrollbar { width: 8px; height: 8px; }

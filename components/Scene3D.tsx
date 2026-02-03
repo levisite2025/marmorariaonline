@@ -302,10 +302,20 @@ export const Scene3D: React.FC<Scene3DProps> = ({ slab, setSlab }) => {
   };
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-transparent">
+    <div className="w-full h-full relative overflow-hidden bg-transparent touch-none">
       
       <Canvas 
-        shadows 
+        shadows
+        // dpr: Controla a densidade de pixels. [1, 2] garante boa qualidade em telas retina
+        // mas evita renderizar em 3x/4x que causa lentidão e crashes.
+        dpr={[1, 2]} 
+        // gl: Configurações do contexto WebGL para máxima compatibilidade
+        gl={{ 
+          antialias: true, 
+          alpha: true, 
+          preserveDrawingBuffer: true, // Necessário para screenshots e impressão funcionarem
+          failIfMajorPerformanceCaveat: false 
+        }}
         camera={{ position: [slab.dimensions.width * 0.5, slab.dimensions.height * -0.5, Math.max(slab.dimensions.width, slab.dimensions.height) * 1.5], fov: 45 }}
         onClick={() => setSelectedId(null)} // Click on void deselects
       >
