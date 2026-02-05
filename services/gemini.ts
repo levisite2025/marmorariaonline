@@ -1,70 +1,74 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { SlabState } from '../types';
 
-// Refactored to initialize the client within each service function to ensure the most up-to-date API key is used.
-
+/**
+ * Gera conselhos técnicos para corte de chapas usando o modelo gemini-3-flash-preview.
+ */
 export const generateCuttingAdvice = async (
   query: string,
   slabState: SlabState,
   chatHistory: string[]
 ): Promise<string> => {
   try {
-    // Initializing Gemini client right before use
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const context = `
-      Você é um especialista sênior em corte de pedras (mármore e granito).
-      O usuário está planejando cortes em uma chapa inteira (Slab).
+      Você é um motor de IA especializado em marmoraria técnica.
+      Material: ${slabState.material}
+      Dimensões da Chapa: ${slabState.dimensions.width}cm x ${slabState.dimensions.height}cm
+      Peças atuais: ${slabState.pieces.length}
       
-      Dados Atuais do Projeto:
-      - Material: ${slabState.material}
-      - Dimensões da Chapa Inteira: ${slabState.dimensions.width}cm x ${slabState.dimensions.height}cm (Espessura: ${slabState.dimensions.thickness}cm)
-      - Peças já planejadas: ${slabState.pieces.map(p => `${p.name} (${p.width}x${p.height}cm)`).join(', ') || 'Nenhuma peça definida ainda.'}
-      
-      Histórico da conversa:
-      ${chatHistory.join('\n')}
-
-      Objetivo: Responda a pergunta do usuário. Se ele pedir sugestões de corte, sugira como aproveitar melhor a chapa.
-      Forneça respostas curtas, técnicas e diretas em Português do Brasil.
+      Regras de Corte:
+      1. Sempre considere 0.5cm de margem para o disco de corte.
+      2. Mármore é mais frágil que Granito; sugira reforços se as peças forem muito longas (>200cm).
+      3. Otimize para evitar sobras em 'L' que são difíceis de vender.
     `;
 
+    // Chamada ao Gemini seguindo as diretrizes de prompt e systemInstruction
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview', // Optimized for fast technical advice
-      contents: context + "\n\nPergunta do usuário: " + query,
+      model: 'gemini-3-flash-preview',
+      contents: `Histórico da conversa:\n${chatHistory.join('\n')}\n\nPergunta do usuário: ${query}`,
       config: {
-        systemInstruction: "Você é um assistente técnico para marmorarias. Foque em otimização de material e segurança no manuseio.",
-      }
+        systemInstruction: context,
+      },
     });
 
-    // Accessing .text property directly
-    return response.text || "Desculpe, não consegui analisar o pedido.";
+    // Acessando .text como propriedade conforme as diretrizes
+    return response.text?.trim() || "Operação concluída sem texto de retorno.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "Erro ao conectar com a IA. Verifique sua chave API.";
+    return "Falha na comunicação com o núcleo de IA.";
   }
 };
 
+/**
+ * Otimiza o layout de corte (Nesting) usando o modelo gemini-3-pro-preview com resposta JSON estruturada.
+ */
 export const optimizeLayout = async (
   requestDescription: string,
   slabWidth: number,
   slabHeight: number
 ): Promise<{ pieces: { name: string; width: number; height: number; x: number; y: number }[] }> => {
   try {
-    // Initializing Gemini client right before use
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    const prompt = `
-      Eu tenho uma chapa de ${slabWidth}cm x ${slabHeight}cm.
-      O cliente quer: "${requestDescription}".
-      Gere uma lista de peças retangulares para cortar desta chapa.
-      Tente organizar (nesting) as peças para caber dentro da chapa (x + width <= ${slabWidth} e y + height <= ${slabHeight}).
-      Retorne apenas JSON válido.
+    const systemInstruction = `
+      SISTEMA DE OTIMIZAÇÃO DE CORTE (NESTING)
+      Você é um motor de IA especializado em otimizar o corte de chapas de mármore e granito.
+      Chapa Master: ${slabWidth}x${slabHeight}cm
+      
+      Gere um plano de corte otimizado em formato JSON.
+      As coordenadas X e Y devem representar o canto inferior esquerdo da peça.
+      Garanta que x + width <= ${slabWidth} e y + height <= ${slabHeight}.
+      Não deve haver sobreposição de peças.
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // Higher reasoning capability for nesting/optimization logic
-      contents: prompt,
+      model: 'gemini-3-pro-preview',
+      contents: `Pedido do cliente: ${requestDescription}`,
       config: {
+        systemInstruction,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -77,10 +81,10 @@ export const optimizeLayout = async (
                   name: { type: Type.STRING },
                   width: { type: Type.NUMBER },
                   height: { type: Type.NUMBER },
-                  x: { type: Type.NUMBER, description: "Coordenada X inicial (canto inferior esquerdo)" },
-                  y: { type: Type.NUMBER, description: "Coordenada Y inicial (canto inferior esquerdo)" }
+                  x: { type: Type.NUMBER },
+                  y: { type: Type.NUMBER }
                 },
-                required: ["name", "width", "height", "x", "y"]
+                propertyOrdering: ["name", "width", "height", "x", "y"]
               }
             }
           }
@@ -88,8 +92,7 @@ export const optimizeLayout = async (
       }
     });
 
-    // Accessing .text property directly
-    const jsonText = response.text || "{}";
+    const jsonText = response.text?.trim() || "{\"pieces\":[]}";
     return JSON.parse(jsonText);
   } catch (error) {
     console.error("Layout Optimization Error:", error);
