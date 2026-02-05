@@ -1,13 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { SlabState } from '../types';
 
-const getClient = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API_KEY environment variable is missing.");
-  }
-  return new GoogleGenAI({ apiKey });
-};
+// Refactored to initialize the client within each service function to ensure the most up-to-date API key is used.
 
 export const generateCuttingAdvice = async (
   query: string,
@@ -15,7 +9,8 @@ export const generateCuttingAdvice = async (
   chatHistory: string[]
 ): Promise<string> => {
   try {
-    const ai = getClient();
+    // Initializing Gemini client right before use
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const context = `
       Você é um especialista sênior em corte de pedras (mármore e granito).
@@ -34,16 +29,14 @@ export const generateCuttingAdvice = async (
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [
-        { role: 'user', parts: [{ text: context }] },
-        { role: 'user', parts: [{ text: query }] }
-      ],
+      model: 'gemini-3-flash-preview', // Optimized for fast technical advice
+      contents: context + "\n\nPergunta do usuário: " + query,
       config: {
         systemInstruction: "Você é um assistente técnico para marmorarias. Foque em otimização de material e segurança no manuseio.",
       }
     });
 
+    // Accessing .text property directly
     return response.text || "Desculpe, não consegui analisar o pedido.";
   } catch (error) {
     console.error("Gemini Error:", error);
@@ -57,7 +50,8 @@ export const optimizeLayout = async (
   slabHeight: number
 ): Promise<{ pieces: { name: string; width: number; height: number; x: number; y: number }[] }> => {
   try {
-    const ai = getClient();
+    // Initializing Gemini client right before use
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const prompt = `
       Eu tenho uma chapa de ${slabWidth}cm x ${slabHeight}cm.
@@ -68,7 +62,7 @@ export const optimizeLayout = async (
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview', // Higher reasoning capability for nesting/optimization logic
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -94,6 +88,7 @@ export const optimizeLayout = async (
       }
     });
 
+    // Accessing .text property directly
     const jsonText = response.text || "{}";
     return JSON.parse(jsonText);
   } catch (error) {

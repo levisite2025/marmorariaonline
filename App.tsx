@@ -5,124 +5,65 @@ import { PrintLayout } from './components/PrintLayout';
 import { LoginScreen } from './components/LoginScreen';
 import { SlabState, MaterialType, CutPiece, Customer, BudgetState } from './types';
 import { optimizeLayout } from './services/gemini';
-import { Box } from 'lucide-react';
+import { Layers, Box, Cpu } from 'lucide-react';
 
 const App: React.FC = () => {
-  // Estado de Autenticação
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   const [slab, setSlab] = useState<SlabState>({
     material: MaterialType.GRANITE,
     activeTextureId: 'saogabriel',
-    dimensions: { width: 300, height: 180, thickness: 2, curvature: 0, inclination: 0 },
+    dimensions: { width: 280, height: 160, thickness: 2, curvature: 0, inclination: 0 },
     pieces: []
   });
 
   const [customer, setCustomer] = useState<Customer>({
-    name: '',
-    phone: '',
-    email: '',
-    address: {
-      street: '',
-      number: '',
-      district: '',
-      city: '',
-      zip: ''
-    },
+    name: '', phone: '', email: '',
+    address: { street: '', number: '', district: '', city: '', zip: '' },
     paymentMethod: ''
   });
 
-  const [budget, setBudget] = useState<BudgetState>({
-    pricePerMq: 0,
-    extraCosts: 0
-  });
-  
+  const [budget, setBudget] = useState<BudgetState>({ pricePerMq: 0, extraCosts: 0 });
   const [isGeneratingLayout, setIsGeneratingLayout] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
 
-  const handleAutoLayout = async (description: string) => {
-    setIsGeneratingLayout(true);
-    try {
-      const result = await optimizeLayout(description, slab.dimensions.width, slab.dimensions.height);
-      
-      const newPieces: CutPiece[] = result.pieces.map((p, index) => ({
-        id: `auto-${Date.now()}-${index}`,
-        name: p.name,
-        width: p.width,
-        height: p.height,
-        x: p.x,
-        y: p.y,
-        color: `hsl(${(index * 30) % 360}, 70%, 50%)` // Cores mais sólidas para o tema claro
-      }));
+  if (!isAuthenticated) return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  if (showPrintView) return <PrintLayout slab={slab} customer={customer} budget={budget} onBack={() => setShowPrintView(false)} />;
 
-      setSlab(prev => ({
-        ...prev,
-        pieces: newPieces
-      }));
-    } catch (e) {
-      alert("Erro ao gerar layout. Tente novamente ou verifique sua API Key.");
-    } finally {
-      setIsGeneratingLayout(false);
-    }
-  };
-
-  // Se não estiver autenticado, mostra a tela de login
-  if (!isAuthenticated) {
-    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
-  }
-
-  // Se estiver em modo de impressão
-  if (showPrintView) {
-    return (
-      <PrintLayout 
-        slab={slab} 
-        customer={customer} 
-        budget={budget} 
-        onBack={() => setShowPrintView(false)} 
-      />
-    );
-  }
-
-  // Aplicação Principal
   return (
-    <div className="h-screen w-screen relative bg-slate-50 text-slate-900 overflow-hidden font-sans selection:bg-orange-200 selection:text-orange-900">
+    <div className="h-screen w-screen relative bg-[#f8fafc] flex flex-col md:flex-row overflow-hidden">
       
-      {/* 3D Viewport - Takes full screen */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-slate-100 to-slate-200">
+      {/* 3D Engine Viewport */}
+      <main className="flex-1 relative z-0">
         <Scene3D slab={slab} setSlab={setSlab} />
-      </div>
-
-      {/* Floating Header - Clean White */}
-      <header className="absolute top-4 left-0 right-0 h-20 px-8 z-20 pointer-events-none flex justify-between items-start">
-        <div className="bg-white/90 backdrop-blur-md p-2 pr-6 rounded-2xl shadow-lg border border-slate-200 flex items-center gap-4 pointer-events-auto">
-          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/20">
-             <Box size={24} className="text-white" />
+        
+        {/* Floating Brand */}
+        <div className="absolute top-8 left-8 flex items-center gap-4 pointer-events-none select-none">
+          <div className="w-12 h-12 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-200 flex items-center justify-center transform -rotate-6">
+            <Box size={24} className="text-white" />
           </div>
           <div>
-             <h1 className="font-bold text-xl tracking-tight text-slate-800 leading-none">
-               Marmore <span className="text-blue-600">Online</span>
-             </h1>
-             <div className="flex items-center gap-2 mt-1">
-               <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-               <p className="text-[10px] text-slate-500 font-bold tracking-wider uppercase">Studio Professional</p>
-             </div>
+            <h1 className="text-xl font-black text-slate-800 tracking-tighter leading-none">Marmore <span className="text-indigo-600">Online</span></h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 flex items-center gap-1">
+              <Cpu size={10} /> Machine Render 3.0
+            </p>
           </div>
         </div>
-      </header>
+      </main>
 
-      {/* Light Theme Sidebar */}
-      <aside className="absolute top-28 left-8 bottom-8 w-[380px] bg-white/90 backdrop-blur-xl border border-slate-200/60 rounded-3xl shadow-2xl shadow-slate-300/50 z-20 flex flex-col overflow-hidden">
-        {/* Top Accent Line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-orange-500" />
-        
+      {/* Floating Sidebar Control */}
+      <aside className="w-full md:w-[420px] h-[50vh] md:h-auto glass md:m-6 md:rounded-[32px] shadow-2xl z-20 flex flex-col overflow-hidden animate-in slide-in-from-right-10 duration-700 border border-white/40">
+        <div className="h-1.5 w-full bg-gradient-to-r from-indigo-500 to-sky-400" />
         <Controls 
-          slab={slab} 
-          setSlab={setSlab} 
-          customer={customer}
-          setCustomer={setCustomer}
-          budget={budget}
-          setBudget={setBudget}
-          onAutoLayout={handleAutoLayout}
+          slab={slab} setSlab={setSlab} 
+          customer={customer} setCustomer={setCustomer}
+          budget={budget} setBudget={setBudget}
+          onAutoLayout={async (d) => {
+            setIsGeneratingLayout(true);
+            try {
+              const res = await optimizeLayout(d, slab.dimensions.width, slab.dimensions.height);
+              setSlab(p => ({ ...p, pieces: res.pieces.map((pc, i) => ({ ...pc, id: `ai-${i}-${Date.now()}`, color: '#6366f1' })) }));
+            } finally { setIsGeneratingLayout(false); }
+          }}
           onOpenPrint={() => setShowPrintView(true)}
           isGenerating={isGeneratingLayout}
         />

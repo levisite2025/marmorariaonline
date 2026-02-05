@@ -8,8 +8,5 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Removemos o StrictMode para evitar o ciclo "Render Start/End" duplo que quebra o Canvas no ambiente de preview
+root.render(<App />);
