@@ -1,6 +1,6 @@
 import React from 'react';
 import { SlabState, Customer, BudgetState, TEXTURE_OPTIONS } from '../types';
-import { ArrowLeft, Printer, Scissors, Share2 } from 'lucide-react';
+import { ArrowLeft, Printer, Scissors, Share2, Ruler } from 'lucide-react';
 
 interface PrintLayoutProps {
   slab: SlabState;
@@ -22,7 +22,6 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
   const textureName = TEXTURE_OPTIONS.find(t => t.id === slab.activeTextureId)?.name || slab.activeTextureId;
 
   const handlePrint = () => {
-    // Timeout pequeno garante que a renderização do DOM esteja completa antes de chamar o print
     setTimeout(() => {
         window.print();
     }, 100);
@@ -65,7 +64,6 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 flex flex-col items-center print:p-0 print:bg-white print:block">
-      {/* Estilos Globais de Impressão */}
       <style>{`
         @media print {
           @page {
@@ -77,7 +75,6 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
             print-color-adjust: exact !important;
             background-color: white !important;
           }
-          /* Garante que nada mais interfira no layout */
           html, body {
             height: auto;
             overflow: visible;
@@ -85,11 +82,10 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
         }
       `}</style>
 
-      {/* Toolbar - Não aparece na impressão */}
       <div className="w-full max-w-[210mm] flex justify-between items-center mb-8 print:hidden gap-4">
         <button 
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-700 transition-colors shadow-sm font-medium"
         >
           <ArrowLeft size={16} /> Voltar
         </button>
@@ -98,7 +94,6 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
           <button 
             onClick={handleShareWhatsapp}
             className="flex items-center gap-2 px-4 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded transition-colors shadow-sm font-medium"
-            title="Enviar resumo para o WhatsApp"
           >
             <Share2 size={16} /> WhatsApp
           </button>
@@ -112,195 +107,254 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
         </div>
       </div>
 
-      {/* A4 Page Container */}
-      <div className="bg-white w-full max-w-[210mm] min-h-[297mm] p-[15mm] shadow-xl print:shadow-none print:w-full print:max-w-none print:min-h-0 print:p-[15mm] print:m-0 text-slate-900">
+      <div className="bg-white w-full max-w-[210mm] min-h-[297mm] p-[15mm] shadow-xl print:shadow-none print:w-full print:max-w-none print:min-h-0 print:p-[15mm] print:m-0 text-slate-900 border border-slate-200 print:border-none rounded-sm">
         
-        {/* Header */}
         <header className="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Marmore Online</h1>
-            <p className="text-sm text-slate-500 mt-1">Orçamento & Plano de Corte</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Marmore <span className="text-indigo-600">Online</span></h1>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Estúdio de Corte & Planejamento</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-bold text-slate-900 uppercase">
-              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            <p className="text-[10px] font-black text-slate-900 uppercase tracking-wider">
+              {new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
-            <p className="text-lg font-mono text-slate-700 font-bold">
+            <p className="text-lg font-black text-indigo-600 font-mono">
               {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </p>
-            <p className="text-xs text-slate-400 mt-1">ID: {Date.now().toString().slice(-6)}</p>
+            <p className="text-[9px] font-bold text-slate-300 uppercase mt-1">Ref: {Date.now().toString().slice(-8)}</p>
           </div>
         </header>
 
-        {/* Info Grid */}
         <div className="grid grid-cols-2 gap-8 mb-8">
-          <div className="space-y-2">
-            <h3 className="font-bold text-sm uppercase tracking-wider text-slate-500 border-b pb-1 mb-2">Cliente</h3>
-            <p className="font-bold text-lg">{customer.name || 'Nome não informado'}</p>
-            <div className="text-sm text-slate-600 space-y-1">
-              <p>{customer.phone}</p>
+          <div className="space-y-3">
+            <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-1 mb-2">Cliente</h3>
+            <p className="font-black text-xl text-slate-800">{customer.name || 'Consumidor Final'}</p>
+            <div className="text-xs text-slate-500 space-y-1 font-medium">
+              <p className="flex items-center gap-2">{customer.phone}</p>
               <p>{customer.email}</p>
-              <p>{customer.address.street}, {customer.address.number}</p>
-              <p>{customer.address.district} - {customer.address.city}</p>
+              <p>{customer.address.street}{customer.address.number ? `, ${customer.address.number}` : ''}</p>
+              <p>{customer.address.district} {customer.address.city ? `• ${customer.address.city}` : ''}</p>
             </div>
           </div>
           
-          <div className="space-y-2">
-            <h3 className="font-bold text-sm uppercase tracking-wider text-slate-500 border-b pb-1 mb-2">Projeto</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="space-y-3">
+            <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-1 mb-2">Especificações Técnicas</h3>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
                <div>
-                 <span className="block text-slate-500 text-xs">Material</span>
-                 <span className="font-medium">{slab.material}</span>
+                 <span className="block text-slate-400 text-[9px] font-bold uppercase tracking-wider">Material</span>
+                 <span className="font-black text-slate-700">{slab.material}</span>
                </div>
                <div>
-                 <span className="block text-slate-500 text-xs">Acabamento/Cor</span>
-                 <span className="font-medium">{textureName}</span>
+                 <span className="block text-slate-400 text-[9px] font-bold uppercase tracking-wider">Cor / Padrão</span>
+                 <span className="font-black text-slate-700">{textureName}</span>
                </div>
                <div>
-                 <span className="block text-slate-500 text-xs">Dimensões Chapa</span>
-                 <span className="font-medium">{slab.dimensions.width} x {slab.dimensions.height} cm</span>
+                 <span className="block text-slate-400 text-[9px] font-bold uppercase tracking-wider">Dimensões Master</span>
+                 <span className="font-black text-slate-700">{slab.dimensions.width} x {slab.dimensions.height} cm</span>
                </div>
                <div>
-                 <span className="block text-slate-500 text-xs">Espessura</span>
-                 <span className="font-medium">{slab.dimensions.thickness} cm</span>
+                 <span className="block text-slate-400 text-[9px] font-bold uppercase tracking-wider">Espessura</span>
+                 <span className="font-black text-slate-700">{slab.dimensions.thickness} cm</span>
                </div>
-               {(slab.dimensions.curvature > 0 || slab.dimensions.inclination > 0) && (
-                 <>
-                   <div>
-                     <span className="block text-slate-500 text-xs">Curvatura (Raio)</span>
-                     <span className="font-medium">{slab.dimensions.curvature} cm</span>
-                   </div>
-                   <div>
-                     <span className="block text-slate-500 text-xs">Inclinação</span>
-                     <span className="font-medium">{slab.dimensions.inclination}°</span>
-                   </div>
-                 </>
+               {slab.dimensions.curvature > 0 && (
+                 <div>
+                   <span className="block text-slate-400 text-[9px] font-bold uppercase tracking-wider">Raio Curvatura</span>
+                   <span className="font-black text-slate-700">{slab.dimensions.curvature} cm</span>
+                 </div>
+               )}
+               {slab.dimensions.inclination > 0 && (
+                 <div>
+                   <span className="block text-slate-400 text-[9px] font-bold uppercase tracking-wider">Inclinação</span>
+                   <span className="font-black text-slate-700">{slab.dimensions.inclination}°</span>
+                 </div>
                )}
             </div>
           </div>
         </div>
 
-        {/* 2D Diagram */}
-        <div className="mb-8 border rounded-lg p-4 bg-slate-50 page-break-inside-avoid print:bg-slate-50 print:border-slate-300">
-           <h3 className="font-bold text-sm uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-             <Scissors size={14} /> Diagrama de Corte
-           </h3>
-           <div className="w-full aspect-[3/2] relative flex items-center justify-center bg-slate-100/50 border-2 border-slate-300 rounded overflow-hidden print:bg-slate-100">
-              {/* SVG Rendering of the Slab */}
+        {/* Diagrama SVG Aprimorado */}
+        <div className="mb-8 border-2 border-slate-100 rounded-[20px] p-6 bg-slate-50 page-break-inside-avoid shadow-inner relative overflow-hidden">
+           <div className="flex justify-between items-center mb-6">
+             <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+               <Scissors size={14} className="text-indigo-600" /> Mapa de Otimização de Corte
+             </h3>
+             <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-indigo-600 rounded-full" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">Peças</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-white border border-slate-200 rounded-full" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">Sobra</span>
+                </div>
+             </div>
+           </div>
+
+           <div className="w-full relative flex items-center justify-center bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-sm" style={{ aspectRatio: `${slab.dimensions.width}/${slab.dimensions.height}` }}>
               <svg 
                 viewBox={`0 0 ${Math.max(1, slab.dimensions.width)} ${Math.max(1, slab.dimensions.height)}`} 
                 preserveAspectRatio="xMidYMid meet"
                 className="w-full h-full block"
               >
-                {/* Master Slab */}
+                {/* Chapa Principal */}
                 <rect 
                   x="0" y="0" 
                   width={slab.dimensions.width} 
                   height={slab.dimensions.height} 
-                  fill="#f8fafc" 
-                  stroke="none"
+                  fill="#fdfdfd" 
+                  stroke="#e2e8f0"
+                  strokeWidth="1"
+                  strokeDasharray="5,5"
                 />
                 
-                {/* Pieces */}
-                {slab.pieces.map((piece, i) => (
-                  <g key={piece.id}>
-                    <rect
-                      x={piece.x}
-                      y={piece.y}
-                      width={piece.width}
-                      height={piece.height}
-                      fill="#e2e8f0"
-                      stroke="#334155"
-                      strokeWidth="1"
-                    />
-                    {/* Piece Dimensions Text (Only if fits) */}
-                    {(piece.width > 20 && piece.height > 20) && (
+                {/* Peças Cortadas */}
+                {slab.pieces.map((piece, i) => {
+                  const fontSize = Math.min(piece.width, piece.height) * 0.15;
+                  const showDetails = piece.width > 25 && piece.height > 15;
+                  const pieceColor = piece.color || '#4f46e5';
+
+                  return (
+                    <g key={piece.id} className="cursor-default">
+                      <rect
+                        x={piece.x}
+                        y={piece.y}
+                        width={piece.width}
+                        height={piece.height}
+                        fill={pieceColor}
+                        fillOpacity="0.1"
+                        stroke={pieceColor}
+                        strokeWidth="1.5"
+                      />
+                      
+                      {/* Número da Peça */}
                       <text
                         x={piece.x + piece.width / 2}
-                        y={piece.y + piece.height / 2}
+                        y={piece.y + (showDetails ? piece.height / 2 - fontSize * 0.5 : piece.height / 2)}
                         dominantBaseline="middle"
                         textAnchor="middle"
-                        fontSize={Math.min(piece.width, piece.height) * 0.2}
-                        fill="#0f172a"
-                        className="font-sans font-bold"
+                        fontSize={Math.max(4, fontSize * 1.2)}
+                        fill={pieceColor}
+                        className="font-sans font-black"
                       >
                         #{i + 1}
                       </text>
-                    )}
-                  </g>
-                ))}
+
+                      {/* Dimensões se couber */}
+                      {showDetails && (
+                        <>
+                          <text
+                            x={piece.x + piece.width / 2}
+                            y={piece.y + piece.height / 2 + fontSize * 1.1}
+                            dominantBaseline="middle"
+                            textAnchor="middle"
+                            fontSize={Math.max(3, fontSize * 0.7)}
+                            fill={pieceColor}
+                            className="font-sans font-bold opacity-80"
+                          >
+                            {piece.width} x {piece.height} cm
+                          </text>
+                        </>
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* Réguas Laterais Esquematizadas */}
+                <line x1="0" y1="-5" x2={slab.dimensions.width} y2="-5" stroke="#94a3b8" strokeWidth="1" />
+                <line x1="-5" y1="0" x2="-5" y2={slab.dimensions.height} stroke="#94a3b8" strokeWidth="1" />
               </svg>
            </div>
-           <p className="text-center text-xs text-slate-400 mt-2">Visualização esquemática 2D - Escala Proporcional</p>
+           
+           <div className="flex justify-between mt-4">
+              <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1">
+                <Ruler size={10} /> Escala Proporcional Automatizada
+              </p>
+              <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">
+                Aproveitamento: {(100 - parseFloat(wastePercent)).toFixed(1)}%
+              </p>
+           </div>
         </div>
 
-        {/* Cut List Table */}
         <div className="mb-8">
-          <h3 className="font-bold text-sm uppercase tracking-wider text-slate-500 border-b pb-1 mb-3">Lista de Cortes</h3>
-          <table className="w-full text-sm text-left">
+          <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-1 mb-4">Detalhamento dos Cortes</h3>
+          <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200">
-                <th className="py-2 font-semibold text-slate-700">#</th>
-                <th className="py-2 font-semibold text-slate-700">Descrição</th>
-                <th className="py-2 font-semibold text-slate-700 text-right">Largura</th>
-                <th className="py-2 font-semibold text-slate-700 text-right">Altura</th>
-                <th className="py-2 font-semibold text-slate-700 text-right">Área (m²)</th>
+              <tr className="bg-slate-50">
+                <th className="py-3 px-4 font-black text-slate-500 uppercase tracking-wider border-y border-slate-100 rounded-l-xl">ID</th>
+                <th className="py-3 px-4 font-black text-slate-500 uppercase tracking-wider border-y border-slate-100">Descrição da Peça</th>
+                <th className="py-3 px-4 font-black text-slate-500 uppercase tracking-wider border-y border-slate-100 text-center">Medidas (cm)</th>
+                <th className="py-3 px-4 font-black text-slate-500 uppercase tracking-wider border-y border-slate-100 text-right rounded-r-xl">Área (m²)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {slab.pieces.map((piece, i) => (
-                <tr key={piece.id}>
-                  <td className="py-2 text-slate-500">{i + 1}</td>
-                  <td className="py-2 font-medium">{piece.name}</td>
-                  <td className="py-2 text-right">{piece.width} cm</td>
-                  <td className="py-2 text-right">{piece.height} cm</td>
-                  <td className="py-2 text-right">{((piece.width * piece.height) / 10000).toFixed(2)}</td>
+                <tr key={piece.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3 px-4 font-bold text-indigo-600">#{i + 1}</td>
+                  <td className="py-3 px-4 font-black text-slate-700 uppercase tracking-tight">{piece.name}</td>
+                  <td className="py-3 px-4 text-center font-mono text-slate-500 font-bold">{piece.width} <span className="text-slate-300">x</span> {piece.height}</td>
+                  <td className="py-3 px-4 text-right font-black text-slate-700">{((piece.width * piece.height) / 10000).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-slate-200">
-                <td colSpan={4} className="py-3 font-bold text-right">Área Utilizada Total:</td>
-                <td className="py-3 font-bold text-right">{usedAreaM2.toFixed(2)} m²</td>
+              <tr className="bg-indigo-50/30">
+                <td colSpan={3} className="py-4 px-4 font-black text-slate-500 text-right uppercase tracking-widest">Área Útil Acumulada:</td>
+                <td className="py-4 px-4 font-black text-xl text-indigo-600 text-right">{usedAreaM2.toFixed(2)} <span className="text-xs">m²</span></td>
               </tr>
             </tfoot>
           </table>
         </div>
 
-        {/* Financial Summary */}
-        <div className="border-t-2 border-slate-900 pt-6 mt-auto page-break-inside-avoid">
-          <div className="flex justify-between items-start">
-            <div className="w-1/2">
-               <h3 className="font-bold text-sm uppercase tracking-wider text-slate-500 mb-2">Métricas</h3>
-               <div className="grid grid-cols-2 gap-y-1 text-sm text-slate-600">
-                 <span>Área Chapa:</span>
-                 <span>{totalAreaM2.toFixed(2)} m²</span>
-                 <span>Desperdício:</span>
-                 <span>{wastePercent}% ({wasteAreaM2.toFixed(2)} m²)</span>
+        <div className="border-t-2 border-slate-900 pt-8 mt-auto page-break-inside-avoid">
+          <div className="flex justify-between items-start gap-12">
+            <div className="flex-1">
+               <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-4">Relatório de Eficiência</h3>
+               <div className="space-y-3">
+                 <div className="flex justify-between text-[11px] font-bold uppercase">
+                   <span className="text-slate-400">Total da Chapa:</span>
+                   <span className="text-slate-700">{totalAreaM2.toFixed(2)} m²</span>
+                 </div>
+                 <div className="flex justify-between text-[11px] font-bold uppercase">
+                   <span className="text-slate-400">Desperdício Estimado:</span>
+                   <span className={parseFloat(wastePercent) > 30 ? 'text-red-500' : 'text-green-600'}>
+                     {wastePercent}% ({wasteAreaM2.toFixed(2)} m²)
+                   </span>
+                 </div>
+                 <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className="bg-indigo-600 h-full rounded-full transition-all duration-1000" 
+                      style={{ width: `${100 - parseFloat(wastePercent)}%` }}
+                    />
+                 </div>
                </div>
             </div>
-            <div className="w-1/2 max-w-xs">
-              <h3 className="font-bold text-sm uppercase tracking-wider text-slate-500 mb-2 text-right">Orçamento</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Material ({totalAreaM2.toFixed(2)}m² x {budget.pricePerMq.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})</span>
+            
+            <div className="w-full max-w-[280px] bg-slate-900 text-white p-6 rounded-[24px] shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <DollarSign size={80} className="text-white" />
+              </div>
+              <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-4 relative">Resumo Financeiro</h3>
+              <div className="space-y-3 relative">
+                <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                  <span>Subtotal Material</span>
                   <span>{materialCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Custos Adicionais</span>
+                <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                  <span>Custos Extras</span>
                   <span>{budget.extraCosts.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
-                <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-2 mt-2 text-slate-900">
-                  <span>Total</span>
-                  <span>{totalCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <div className="flex justify-between items-end pt-3 border-t border-white/10 mt-2">
+                  <span className="text-[10px] font-black uppercase text-indigo-400">Valor Total</span>
+                  <span className="text-2xl font-black tracking-tighter">{totalCost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="mt-8 pt-4 border-t border-slate-200 text-center text-xs text-slate-400">
-             <p>Orçamento válido por 15 dias. Sujeito a disponibilidade de estoque.</p>
-             <p>Gerado por Marmore Online - marmoreonline.com</p>
+          <div className="mt-12 pt-6 border-t border-slate-100 flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em]">
+             <p>Gerado por Marmore Online Pro v2.5</p>
+             <p className="text-slate-200">•</p>
+             <p>Aprovação do Cliente: ________________________________</p>
           </div>
         </div>
 
@@ -308,3 +362,10 @@ export const PrintLayout: React.FC<PrintLayoutProps> = ({ slab, customer, budget
     </div>
   );
 };
+
+const DollarSign = ({ size, className }: { size: number, className: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="12" y1="1" x2="12" y2="23" />
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+  </svg>
+);
