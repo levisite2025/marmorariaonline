@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, 'data');
 const dataFile = path.join(dataDir, 'licenses.json');
 const systemDataFile = path.join(dataDir, 'marmoraria-system.json');
-const port = Number(process.env.LICENSE_API_PORT || 4010);
+const port = Number(process.env.PORT || process.env.LICENSE_API_PORT || 4010);
 
 const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
