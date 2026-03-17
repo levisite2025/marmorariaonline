@@ -56,6 +56,13 @@ export interface MarmorariaDatabase {
   production: ProductionOrder[];
 }
 
+export const createEmptyDatabase = (): MarmorariaDatabase => ({
+  customers: [],
+  inventory: [],
+  quotes: [],
+  production: [],
+});
+
 export const createEmptyCustomer = (): Customer => ({
   name: '',
   phone: '',

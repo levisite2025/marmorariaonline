@@ -31,71 +31,20 @@ const isLicenseUsable = (license) => {
   return expiry.getTime() >= Date.now() && !hasSeatOverage(license);
 };
 
-const seedDatabase = () => ({
-  licenses: [
-    {
-      id: 'lic-1',
-      companyName: 'Granitos Alpha',
-      document: '12.345.678/0001-99',
-      contactName: 'Joao Pereira',
-      contactEmail: 'joao@alpha.com',
-      phone: '(11) 98888-1000',
-      systemName: 'Marmoraria Online',
-      planName: 'Professional',
-      licenseKey: generateLicenseKey(),
-      seats: 12,
-      activeUsers: 3,
-      users: [
-        { id: 'user-1', name: 'Joao Pereira', email: 'joao@alpha.com', role: 'Admin', status: 'Ativo', lastAccessAt: new Date().toISOString() },
-        { id: 'user-2', name: 'Marina Costa', email: 'marina@alpha.com', role: 'Operador', status: 'Ativo', lastAccessAt: new Date().toISOString() },
-        { id: 'user-3', name: 'Lucas Freitas', email: 'lucas@alpha.com', role: 'Vendedor', status: 'Ativo', lastAccessAt: new Date().toISOString() },
-      ],
-      renewalHistory: [],
-      issuedAt: '2026-03-01',
-      expiresAt: '2027-03-01',
-      status: 'Ativa',
-      notes: 'Cliente com implantacao completa e modulo de producao ativo.',
-    },
-  ],
+const emptyLicenseDatabase = () => ({
+  licenses: [],
 });
 
-const seedSystemDatabase = () => ({
-  customers: [
-    {
-      id: 'cust-1',
-      companyName: 'Residencial Orion',
-      contactName: 'Mariana Alves',
-      name: 'Mariana Alves',
-      phone: '(11) 99999-1001',
-      email: 'mariana@orion.com',
-      address: { street: 'Rua das Acacias', number: '120', district: 'Centro', city: 'Sao Paulo', zip: '01010-000' },
-      paymentMethod: 'Pix',
-      tags: ['alto padrao', 'arquitetura'],
-      lastContact: '2026-03-15',
-    },
-  ],
-  inventory: [
-    {
-      id: 'slab-1',
-      code: 'SG-280x160',
-      material: 'Granito',
-      textureId: 'saogabriel',
-      width: 280,
-      height: 160,
-      thickness: 2,
-      status: 'Disponivel',
-      supplier: 'Pedras Brasil',
-      location: 'Galpao A',
-      cost: 1450,
-    },
-  ],
+const emptySystemDatabase = () => ({
+  customers: [],
+  inventory: [],
   quotes: [],
   production: [],
 });
 
 const normalizeDatabase = (raw) => {
   if (!raw || typeof raw !== 'object' || !Array.isArray(raw.licenses)) {
-    return seedDatabase();
+    return emptyLicenseDatabase();
   }
 
   return {
@@ -134,13 +83,13 @@ const normalizeDatabase = (raw) => {
 };
 
 const normalizeSystemDatabase = (raw) => {
-  const seed = seedSystemDatabase();
-  if (!raw || typeof raw !== 'object') return seed;
+  const empty = emptySystemDatabase();
+  if (!raw || typeof raw !== 'object') return empty;
   return {
-    customers: Array.isArray(raw.customers) ? raw.customers : seed.customers,
-    inventory: Array.isArray(raw.inventory) ? raw.inventory : seed.inventory,
-    quotes: Array.isArray(raw.quotes) ? raw.quotes : seed.quotes,
-    production: Array.isArray(raw.production) ? raw.production : seed.production,
+    customers: Array.isArray(raw.customers) ? raw.customers : empty.customers,
+    inventory: Array.isArray(raw.inventory) ? raw.inventory : empty.inventory,
+    quotes: Array.isArray(raw.quotes) ? raw.quotes : empty.quotes,
+    production: Array.isArray(raw.production) ? raw.production : empty.production,
   };
 };
 
@@ -149,13 +98,13 @@ const ensureDatabase = async () => {
     await fs.mkdir(dataDir, { recursive: true });
     await fs.access(dataFile);
   } catch {
-    await fs.writeFile(dataFile, JSON.stringify(seedDatabase(), null, 2), 'utf8');
+    await fs.writeFile(dataFile, JSON.stringify(emptyLicenseDatabase(), null, 2), 'utf8');
   }
 
   try {
     await fs.access(systemDataFile);
   } catch {
-    await fs.writeFile(systemDataFile, JSON.stringify(seedSystemDatabase(), null, 2), 'utf8');
+    await fs.writeFile(systemDataFile, JSON.stringify(emptySystemDatabase(), null, 2), 'utf8');
   }
 };
 
@@ -296,6 +245,21 @@ const server = http.createServer(async (request, response) => {
         expiresAt: license.expiresAt,
         status: license.status,
       });
+      return;
+    }
+
+    const deleteLicenseMatch = pathname.match(/^\/api\/licenses\/([^/]+)$/);
+    if (request.method === 'DELETE' && deleteLicenseMatch) {
+      const [, licenseId] = deleteLicenseMatch;
+      const database = await readDatabase();
+      await writeSystemDatabase(emptySystemDatabase());
+      sendJson(
+        response,
+        200,
+        await writeDatabase({
+          licenses: database.licenses.filter((license) => license.id !== licenseId),
+        })
+      );
       return;
     }
 

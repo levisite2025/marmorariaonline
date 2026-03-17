@@ -168,6 +168,10 @@ export const createSeedLicenseDatabase = (): LicenseDatabase => ({
   ],
 });
 
+export const createEmptyLicenseDatabase = (): LicenseDatabase => ({
+  licenses: [],
+});
+
 const normalizeUsers = (users: unknown, fallbackActiveUsers: number): LicenseUser[] => {
   if (!Array.isArray(users)) return [];
   return users
@@ -231,13 +235,13 @@ const normalizeLicense = (license: Partial<CompanyLicense>, index: number): Comp
 };
 
 export const normalizeLicenseDatabase = (raw: unknown): LicenseDatabase => {
-  const seed = createSeedLicenseDatabase();
-  if (!raw || typeof raw !== 'object') return seed;
+  const empty = createEmptyLicenseDatabase();
+  if (!raw || typeof raw !== 'object') return empty;
   const source = raw as Partial<LicenseDatabase>;
   return {
     licenses: Array.isArray(source.licenses)
       ? source.licenses.map((license, index) => normalizeLicense(license, index))
-      : seed.licenses,
+      : empty.licenses,
   };
 };
 

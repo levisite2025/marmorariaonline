@@ -11,9 +11,11 @@ import {
   normalizeLicenseSession,
   validateStoredLicenseSession,
 } from './licenseData';
+import { createEmptyDatabase } from './systemData';
 
 const STORAGE_KEY = 'marmoraria-license-db-v1';
 const SESSION_KEY = 'marmoraria-license-session-v1';
+const SYSTEM_STORAGE_KEY = 'marmoraria-online-db-v2';
 const API_BASE_URL = (import.meta.env.VITE_LICENSE_API_URL || 'http://127.0.0.1:4010/api').replace(/\/$/, '');
 
 interface CreateLicensePayload {
@@ -59,6 +61,10 @@ const saveLocalSession = (session: LicenseSession | null) => {
   } else {
     localStorage.removeItem(SESSION_KEY);
   }
+};
+
+const clearLocalSystemDatabase = () => {
+  localStorage.setItem(SYSTEM_STORAGE_KEY, JSON.stringify(createEmptyDatabase()));
 };
 
 const fetchJson = async <T>(path: string, init?: RequestInit): Promise<T> => {
@@ -258,6 +264,38 @@ export const updateLicenseUser = async (
       return { ...license, users, activeUsers: getActiveUserCount({ users, activeUsers: license.activeUsers }) };
     }),
   });
+};
+
+export const deleteLicenseRecord = async (licenseId: string) => {
+  try {
+    const deletedLicense = readLocalDatabase().licenses.find((license) => license.id === licenseId);
+    const database = normalizeLicenseDatabase(
+      await fetchJson<LicenseDatabase>(`/licenses/${licenseId}`, {
+        method: 'DELETE',
+      })
+    );
+    const activeSession = readLocalSession();
+    if (activeSession && deletedLicense && activeSession.licenseKey === deletedLicense.licenseKey) {
+      saveLocalSession(null);
+    }
+    if (deletedLicense) {
+      clearLocalSystemDatabase();
+    }
+    return saveLocalDatabase(database);
+  } catch {
+    const database = readLocalDatabase();
+    const deletedLicense = database.licenses.find((license) => license.id === licenseId);
+    if (deletedLicense) {
+      const activeSession = readLocalSession();
+      if (activeSession?.licenseKey === deletedLicense.licenseKey) {
+        saveLocalSession(null);
+      }
+      clearLocalSystemDatabase();
+    }
+    return saveLocalDatabase({
+      licenses: database.licenses.filter((license) => license.id !== licenseId),
+    });
+  }
 };
 
 export const validateLicenseAccess = async (companyName: string, licenseKey: string): Promise<LicenseSession | null> => {

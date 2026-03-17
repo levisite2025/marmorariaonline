@@ -9,21 +9,23 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Trash2,
   UserPlus,
   Users,
 } from 'lucide-react';
 import {
   canAddActiveUser,
+  createEmptyLicenseDatabase,
   getActiveUserCount,
   hasSeatOverage,
   LicenseStatus,
   LicenseUser,
-  normalizeLicenseDatabase,
 } from '../services/licenseData';
 import {
   addLicenseUser,
   createLicenseRecord,
   cycleLicenseStatus,
+  deleteLicenseRecord,
   loadLicenseDatabase,
   regenerateLicenseRecord,
   renewLicenseRecord,
@@ -60,14 +62,14 @@ const SummaryCard = ({ label, value, helper }: { label: string; value: string; h
 );
 
 export const LicensePanel: React.FC = () => {
-  const [database, setDatabase] = useState(() => normalizeLicenseDatabase(null));
+  const [database, setDatabase] = useState(() => createEmptyLicenseDatabase());
   const [form, setForm] = useState(emptyForm);
   const [query, setQuery] = useState('');
   const [validationKey, setValidationKey] = useState('');
   const [flashMessage, setFlashMessage] = useState('');
 
   useEffect(() => {
-    loadLicenseDatabase().then(setDatabase).catch(() => setDatabase(normalizeLicenseDatabase(null)));
+    loadLicenseDatabase().then(setDatabase).catch(() => setDatabase(createEmptyLicenseDatabase()));
   }, []);
 
   useEffect(() => {
@@ -169,6 +171,14 @@ export const LicensePanel: React.FC = () => {
   const changeUserRole = async (licenseId: string, userId: string, role: LicenseUser['role']) => {
     setDatabase(await updateLicenseUser(licenseId, userId, { role }));
     notify('Perfil do usuario atualizado.');
+  };
+
+  const deleteLicense = async (licenseId: string, companyName: string) => {
+    const confirmed = window.confirm(`Excluir a empresa "${companyName}" e toda a licenca dela?`);
+    if (!confirmed) return;
+
+    setDatabase(await deleteLicenseRecord(licenseId));
+    notify('Empresa excluida do painel de licencas.');
   };
 
   return (
@@ -281,6 +291,9 @@ export const LicensePanel: React.FC = () => {
                       </button>
                       <button onClick={() => addUserToLicense(license.id)} className="px-4 py-3 rounded-2xl bg-slate-100 font-bold flex items-center gap-2">
                         <UserPlus size={16} /> Adicionar usuario
+                      </button>
+                      <button onClick={() => deleteLicense(license.id, license.companyName)} className="px-4 py-3 rounded-2xl bg-red-50 text-red-700 font-bold flex items-center gap-2">
+                        <Trash2 size={16} /> Excluir empresa
                       </button>
                     </div>
 
